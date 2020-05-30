@@ -26,6 +26,6 @@ haproxy_src_patch: "{{ haproxy_version | regex_replace('[0-9]+.[0-9]+.([0-9]+)',
 
 haproxy_full_version: "{{ haproxy_version | regex_replace('([0-9]+.[0-9]+.[0-9]+)','\\1') if haproxy_version | regex_search('([0-9]+.[0-9]+.[0-9]+)') else haproxy_version | regex_replace('([0-9]+.[0-9]+).*','\\1.0')}}"
 
-haproxy_scripts_ssl_deploy: /usr/local/bin/haproxy-ssl-deploy
+haproxy_letsencrypt_ssl_deploy: /usr/local/bin/haproxy-letsencrypt-ssl-deploy
 
-haproxy_scripts_ocsp_deploy: /usr/local/bin/haproxy-ocsp-deploy
+haproxy_letsencrypt_ocsp_deploy: /usr/local/bin/haproxy-letsencrypt-ocsp-deploy
