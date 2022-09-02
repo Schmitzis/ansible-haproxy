@@ -9,9 +9,9 @@
     - haproxy
     - haproxy-check-version-support
 
-- include_vars: "{{ ansible_os_family }}.yml"
+- ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
 
-- import_tasks: "install_ppa.yml"
+- ansible.builtin.import_tasks: "install_ppa.yml"
   tags:
     - configuration
     - haproxy
@@ -44,32 +44,32 @@
     - haproxy
     - haproxy-user
 
-- import_tasks: certificates.yml
+- ansible.builtin.import_tasks: certificates.yml
   tags:
     - configuration
     - haproxy
     - haproxy-certificates
 
-- import_tasks: acl.yml
+- ansible.builtin.import_tasks: acl.yml
   tags:
     - configuration
     - haproxy
     - haproxy-acl
 
-- import_tasks: configuration.yml
+- ansible.builtin.import_tasks: configuration.yml
   tags:
     - configuration
     - haproxy
     - haproxy-configuration
 
-- import_tasks: letsencrypt.yml
+- ansible.builtin.import_tasks: letsencrypt.yml
   tags:
     - configuration
     - haproxy
     - haproxy-letsencrypt
 
 - name: start and enable service
-  ansible.builtin.service:
+  ansible.builtin.ansible.builtin.service:
     name: haproxy
     state: "{{ service_default_state | default('started') }}"
     enabled: "{{ service_default_enabled | default(true) | bool }}"
