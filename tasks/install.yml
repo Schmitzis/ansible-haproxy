@@ -1,5 +1,56 @@
 # tasks file
 ---
+- name: install | dependencies (pre)
+  ansible.builtin.apt:
+    name: "{{ haproxy_dependencies_pre }}"
+    state: "{{ apt_install_state | default('latest') }}"
+    update_cache: true
+    cache_valid_time: "{{ apt_update_cache_valid_time | default(3600) }}"
+  tags:
+    - haproxy-repository-install-dependencies
+
+- name: install | Add Ubuntu PPA
+  block:
+    - name: install | add repository from PPA and install its signing key
+      ansible.builtin.apt_repository:
+        repo: "{{ haproxy_ppa }}"
+        update_cache: true
+      when: haproxy_use_ppa | bool
+      tags:
+        - haproxy-install-add-repository
+  when: haproxy_use_ppa and ansible_distribution == 'Ubuntu'
+
+- name: install | Add Debian Repo
+  block:
+    - name: install | add APT Pin for haproxy.debian.net
+      ansible.builtin.copy:
+        dest: /etc/apt/preferences.d/haproxy
+        mode: 0644
+        content: |
+          # Ansible managed
+          Package: haproxy haproxy-dbgsym haproxy-doc vim-haproxy
+          Pin: release o=PPA-haproxy
+          Pin-Priority: 1001
+      tags:
+        - haproxy-install-add-repository
+
+    - name: install | download gpg key from haproxy.debian.net
+      ansible.builtin.get_url:
+        url: https://haproxy.debian.net/bernat.debian.org.gpg
+        dest: /usr/share/keyrings/haproxy.debian.net.asc
+        mode: 0644
+      tags:
+        - haproxy-install-add-repository
+
+    - name: install | add haproxy debian repository
+      ansible.builtin.apt_repository:
+        repo: "{{ haproxy_deb_repo }}"
+        update_cache: true
+        filename: haproxy
+      tags:
+        - haproxy-install-add-repository
+  when: haproxy_use_deb_repo and ansible_distribution == 'Debian'
+
 - name: install | dependencies
   ansible.builtin.apt:
     name: "{{ item.name }}"

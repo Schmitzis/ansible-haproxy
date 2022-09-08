@@ -36,6 +36,8 @@ haproxy_dependencies_pre:
   - dirmngr
   - apt-transport-https
 
+haproxy_deb_repo: "deb [signed-by=/usr/share/keyrings/haproxy.debian.net.asc] http://haproxy.debian.net {{ ansible_distribution_release }}-backports-{{ haproxy_version }} main"
+
 haproxy_letsencrypt_ssl_deploy: /usr/local/bin/haproxy-letsencrypt-ssl-deploy
 
 haproxy_letsencrypt_ocsp_deploy: /usr/local/bin/haproxy-letsencrypt-ocsp-deploy
