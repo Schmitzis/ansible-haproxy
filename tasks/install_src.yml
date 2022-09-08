@@ -1,0 +1,108 @@
+---
+- name: Install | dependecies
+  ansible.builtin.package:  # noqa package-latest
+    name: "{{ haproxy_src_dependencies | default() }}"
+    state: latest
+  tags:
+    - haproxy-install-dependencies
+
+- name: Add the group '{{ haproxy_global_group }}'
+  ansible.builtin.group:
+    name: "{{ haproxy_global_group }}"
+    state: present
+
+- name: Add the user '{{ haproxy_global_user }}'
+  ansible.builtin.user:
+    name: "{{ haproxy_global_user }}"
+    group: "{{ haproxy_global_group }}"
+    shell: /sbin/nologin
+    system: yes
+    create_home: no
+    append: yes
+    state: present
+
+- name: Install | Extracting HAProxy
+  ansible.builtin.unarchive:
+    src: "http://www.haproxy.org/download/{{ haproxy_version }}/src/haproxy-{{ haproxy_full_version }}.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+  tags:
+    - haproxy-install-from-source
+
+- name: Install | Compile HAProxy
+  community.general.make:
+    chdir: /tmp/haproxy-{{ haproxy_full_version }}
+    params:
+      TARGET: linux-glibc
+      USE_PCRE: 1
+      USE_PCRE_JIT: 1
+      USE_OPENSSL: 1
+      USE_ZLIB: 1
+      USE_LINUX_TPROXY: 1
+      USE_REGPARM: 1
+      USE_LUA: "{{ 1 if haproxy_use_lua else '' }}"
+      USE_THREAD: 1
+      USE_TFO: 1
+      USE_CPU_AFFINITY: 1
+      USE_SYSTEMD: 1
+  tags:
+    - haproxy-install-from-source
+
+- name: Install | Install HAProxy
+  community.general.make:
+    chdir: /tmp/haproxy-{{ haproxy_full_version }}
+    target: install
+  tags:
+    - haproxy-install-from-source
+
+- name: Install | Create haproxy folders
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - "/etc/haproxy/"
+    - "/etc/haproxy/errors/"
+  tags:
+    - haproxy-install-from-source
+
+- name: Install | Create haproxy symbolic link
+  ansible.builtin.file:
+    src: "/usr/local/sbin/haproxy"
+    dest: "/usr/sbin/haproxy"
+    state: link
+  tags:
+    - haproxy-install-from-source
+
+- name: Install | Copying errors file
+  ansible.builtin.copy:
+    src: "/tmp/haproxy-{{ haproxy_full_version }}/examples/errorfiles/"
+    dest: "/etc/haproxy/errors/"
+    remote_src: yes
+    directory_mode: yes
+    owner: root
+    group: root
+    mode: 0755
+  tags:
+    - haproxy-install-from-source
+
+- name: Install | Check if systemd is installed
+  ansible.builtin.package_facts:
+    manager: "auto"
+
+- name: Install | Service file
+  ansible.builtin.copy:
+    src: "files/systemd/system/haproxy.service"
+    dest: "/etc/systemd/system/haproxy.service"
+    mode: 0644
+  when: "'systemd' in ansible_facts.packages"
+  tags:
+    - haproxy-install-from-source
+
+- name: Install | Reload systemctl daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: "'systemd' in ansible_facts.packages"
+  tags:
+    - haproxy-install-from-source

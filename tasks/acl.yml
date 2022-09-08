@@ -1,6 +1,6 @@
 # tasks file
 ---
-- name: acl | create directories
+- name: ACL | create directories
   ansible.builtin.file:
     path: "{{ item.dest | dirname }}"
     state: directory
@@ -11,7 +11,7 @@
   tags:
     - haproxy-acl-create-directories
 
-- name: acl | update files
+- name: ACL | update files
   ansible.builtin.template:
     src: etc/haproxy/acl.j2
     dest: "{{ item.dest }}"

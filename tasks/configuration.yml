@@ -1,6 +1,6 @@
 # tasks file
 ---
-- name: configuration | warn or fail  # noqa: ignore-errors
+- name: Configuration | warn or fail  # noqa: ignore-errors
   ansible.builtin.fail:
     msg: "haproxy_global_nbproc is deprecated"
   ignore_errors: "{{ haproxy_version is version('2.5', '<') }}"
@@ -10,7 +10,7 @@
   tags:
     - haproxy-configuration-warn-or-fail
 
-- name: configuration | update file
+- name: Configuration | update file
   ansible.builtin.template:
     src: "{{ haproxy_conf_template }}"
     dest: /etc/haproxy/haproxy.cfg
@@ -18,6 +18,6 @@
     group: root
     mode: 0640
     validate: 'haproxy -f %s -c'
-  notify: restart haproxy
+  notify: Restart haproxy
   tags:
     - haproxy-configuration-update-file

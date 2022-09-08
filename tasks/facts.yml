@@ -1,0 +1,37 @@
+---
+- name: Install | Check for existing haproxy installation
+  ansible.builtin.shell: |
+    which haproxy
+  register: haproxy_which
+  changed_when: false
+  ignore_errors: yes
+  when: not haproxy_use_ppa
+
+- name: Install | Check for existing haproxy version
+  ansible.builtin.shell: haproxy -version | head -1 | egrep -o "([0-9]{1,}\.)+[0-9]{1,}"  # noqa risky-shell-pipe
+  register: haproxy_version_installed
+  when: (haproxy_which.rc == 0) and (not haproxy_use_ppa)
+  changed_when: False
+  failed_when: False
+
+- name: Install | Print existing haproxy version
+  ansible.builtin.debug:
+    msg: "{{ haproxy_version_installed.stdout }}"
+  when: (haproxy_which.rc == 0) and (not haproxy_use_ppa) and haproxy_version_installed is defined
+
+- name: Install | Check for latest upstream haproxy version
+  ansible.builtin.shell: git ls-remote --tags http://git.haproxy.org/git/haproxy-{{ haproxy_version }}.git | egrep -o "([0-9]{1,}\.)+[0-9]{1,}" | tail -1  # noqa risky-shell-pipe command-instead-of-module
+  register: haproxy_version_upstream
+  when: (not haproxy_use_ppa)
+  changed_when: False
+  failed_when: haproxy_version_upstream.stdout == ''
+
+- name: Set Version of latest upstream
+  ansible.builtin.set_fact:
+    haproxy_full_version: "{{ haproxy_version_upstream.stdout }}"
+  when: (not haproxy_use_ppa)
+
+- name: Install | Print latest upstream haproxy version
+  ansible.builtin.debug:
+    msg: "{{ haproxy_full_version }}"
+  when: (not haproxy_use_ppa) and haproxy_full_version is defined

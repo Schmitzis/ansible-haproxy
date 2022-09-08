@@ -1,6 +1,6 @@
 # handlers file
 ---
-- name: restart haproxy
+- name: Restart haproxy
   ansible.builtin.service:
     name: haproxy
     state: "{{ haproxy_restart_handler_state }}"

@@ -1,6 +1,6 @@
 # tasks file
 ---
-- name: certificates | create directories
+- name: Certificates | create directories
   ansible.builtin.file:
     path: "{{ item.dest | dirname }}"
     state: directory
@@ -12,7 +12,7 @@
   tags:
     - haproxy-certificates-create-directories
 
-- name: certificates | copy files
+- name: Certificates | copy files
   ansible.builtin.copy:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -25,12 +25,12 @@
   tags:
     - haproxy-certificates-copy-files
 
-- name: certificates | remove files
+- name: Certificates | remove files
   ansible.builtin.file:
     path: "{{ item.dest }}"
     state: absent
   with_items: "{{ haproxy_ssl_map }}"
   when: item.state is defined and item.state == 'absent'
-  notify: restart haproxy
+  notify: Restart haproxy
   tags:
     - haproxy-certificates-remove-files

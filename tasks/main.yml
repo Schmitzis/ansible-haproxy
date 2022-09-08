@@ -1,45 +1,66 @@
 # tasks file
 ---
-- name: check version support
+- name: Check version support
   ansible.builtin.fail:
     msg: "HAProxy version {{ haproxy_version }} is not supported"
-  when: haproxy_version | string not in haproxy_versions_supported
+  when: (haproxy_version | regex_replace('([0-9]+.[0-9]+).[0-9]','\\1')) | string not in haproxy_versions_supported
   tags:
     - configuration
     - haproxy
     - haproxy-check-version-support
 
-- ansible.builtin.import_tasks: install.yml
+- name: Include OS Variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Collect HAProxy facts
+  ansible.builtin.import_tasks: facts.yml
+  when: (not haproxy_use_ppa)
+
+- name: Install HAProxy with PPA
+  ansible.builtin.import_tasks: install_ppa.yml
   tags:
     - configuration
     - haproxy
     - haproxy-install
+  when: haproxy_use_ppa
 
-- ansible.builtin.import_tasks: certificates.yml
+- name: Install HAProxy from Source
+  ansible.builtin.import_tasks: "install_src.yml"
+  tags:
+    - configuration
+    - haproxy
+    - haproxy-install
+  when: (haproxy_full_version != haproxy_version_installed.stdout) and (not haproxy_use_ppa)
+
+- name: Include certificates tasks
+  ansible.builtin.import_tasks: certificates.yml
   tags:
     - configuration
     - haproxy
     - haproxy-certificates
 
-- ansible.builtin.import_tasks: acl.yml
+- name: Include ACL
+  ansible.builtin.import_tasks: acl.yml
   tags:
     - configuration
     - haproxy
     - haproxy-acl
 
-- ansible.builtin.import_tasks: configuration.yml
+- name: Include configuration
+  ansible.builtin.import_tasks: configuration.yml
   tags:
     - configuration
     - haproxy
     - haproxy-configuration
 
-- ansible.builtin.import_tasks: letsencrypt.yml
+- name: Include Letsencrypt
+  ansible.builtin.import_tasks: letsencrypt.yml
   tags:
     - configuration
     - haproxy
     - haproxy-letsencrypt
 
-- name: start and enable service
+- name: Start and enable service
   ansible.builtin.service:
     name: haproxy
     state: "{{ service_default_state | default('started') }}"
