@@ -21,6 +21,7 @@ haproxy_dependencies_pre:
   - dirmngr
 
 haproxy_ppa: "ppa:vbernat/haproxy-{{ haproxy_version }}"
+haproxy_deb_repo: "deb [signed-by=/usr/share/keyrings/haproxy.debian.net.asc] http://haproxy.debian.net {{ ansible_distribution_release }}-backports-{{ haproxy_version }} main"
 
 haproxy_letsencrypt_ssl_deploy: /usr/local/bin/haproxy-letsencrypt-ssl-deploy
 
