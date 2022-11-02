@@ -127,6 +127,13 @@ backend {{ backend.name }}
 
 {% endfor %}
 {% endfor %}
+{% for server_dynamic_remote in backend.server_dynamic_remote | default([]) %}
+{% for server_name in groups[server_dynamic_remote.group] | difference([inventory_hostname]) %}
+{% set server = hostvars[server_name] %}
+  server {{ server.inventory_hostname }} {% if server.ansible_eth1.ipv4.address is defined %}{{ server.ansible_eth1.ipv4.address }}{% else %}{{ server_name }}{% endif %}{% if server_dynamic_remote.listen_port is defined %}:{{ server_dynamic_remote.listen_port }}{% endif %}{% for param in server_dynamic_remote.param | default([]) %} {{ param }}{% endfor %}
+
+{% endfor %}
+{% endfor %}
 {% if backend.server_template is defined %}
   server-template {{ backend.server_template.name }} {{ backend.server_template.num}} {{ backend.server_template.fqdn }}{% if backend.server_template.port is defined %}:{{ backend.server_template.port }}{% endif %} {% for param in backend.server_template.param | default([]) %} {{ param }}{% endfor %}
 
@@ -147,4 +154,5 @@ backend {{ backend.name }}
 {% for line in backend.raw_options | default([]) %}
   {{ line }}
 {% endfor %}
+
 {% endfor %}

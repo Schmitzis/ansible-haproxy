@@ -827,6 +827,60 @@ None
               - backup
 ```
 
+#### Kubernetes API Proxy, prefering local node (listen)
+
+
+```yaml
+---
+- hosts: all
+  roles:
+    - haproxy
+  vars:
+    haproxy_frontend:
+      - name: kubernetes-apiserver
+        bind:
+          - listen: ":::8443 v4v6"
+        mode: tcp
+        option:
+          - tcplog
+        default_backend: kubernetes-apiserver
+        timeout:
+          - type: client
+            timeout: 3h
+          - type: server
+            timeout: 3h
+
+    haproxy_backend:
+      - name: kubernetes-apiserver
+        default_server_params:
+          - resolvers default
+          - resolve-prefer ipv4
+          - inter 10s
+        mode: tcp
+        option:
+          - httpchk GET /readyz HTTP/1.0
+          - log-health-checks
+        http_check: 'expect status 200'
+        balance: roundrobin
+        # first localhost
+        server:
+          - name: "{{ inventory_hostname }}"
+            listen: "{{ inventory_hostname }}:6443"
+            param:
+              - check
+              - check-ssl
+              - verify none
+        # other nodes in master group
+        server_dynamic_remote:
+          - group: master
+            listen_port: 6443
+            param:
+              - check
+              - check-ssl
+              - verify none
+```
+
+
 ## Overriding configuration template
 
 If you can't customize via variables because an option isn't exposed, you can override the template used to generate the haproxy configuration file.
