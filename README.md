@@ -395,6 +395,7 @@ Set up (the latest version of) [HAProxy](http://www.haproxy.org/) in Ubuntu syst
 * `haproxy_backend.{n}.server_template.port`: [optional]: Port specification
 * `haproxy_backend.{n}.server_template.{n}.param`: [optional]: A list of parameters for this server template
 * `haproxy_backend.{n}.server_dynamic`: [optional]: Dynamic backend server declaration
+* `haproxy_backend.{n}.server_dynamic_remote`: [optional]: Dynamic backend server declaration, exluces current host
 * `haproxy_backend.{n}.server_dynamic.{n}.group`: [required]: An ansible group containing hosts to be added as backend servers. Uses `inventory_hostname` for name and either `ansible_host` (if defined) or `inventory_hostname` for the listen address of each host.
 * `haproxy_backend.{n}.server_dynamic.{n}.listen_port`: [optional]: The port to use with each dynamic backend (translates to `listen <ansible_host/inventory_hostname>:<listen_port>`).
 * `haproxy_backend.{n}.server_dynamic.{n}.param`: [optional]: A list of parameters to apply on each backend server.
@@ -799,6 +800,60 @@ None
               - check
               - backup
 ```
+
+#### Kubernetes API Proxy, prefering local node (listen)
+
+
+```yaml
+---
+- hosts: all
+  roles:
+    - haproxy
+  vars:
+    haproxy_frontend:
+      - name: kubernetes-apiserver
+        bind:
+          - listen: ":::8443 v4v6"
+        mode: tcp
+        option:
+          - tcplog
+        default_backend: kubernetes-apiserver
+        timeout:
+          - type: client
+            timeout: 3h
+          - type: server
+            timeout: 3h
+
+    haproxy_backend:
+      - name: kubernetes-apiserver
+        default_server_params:
+          - resolvers default
+          - resolve-prefer ipv4
+          - inter 10s
+        mode: tcp
+        option:
+          - httpchk GET /readyz HTTP/1.0
+          - log-health-checks
+        http_check: 'expect status 200'
+        balance: roundrobin
+        # first localhost
+        server:
+          - name: "{{ inventory_hostname }}"
+            listen: "{{ inventory_hostname }}:6443"
+            param:
+              - check
+              - check-ssl
+              - verify none
+        # other nodes in master group
+        server_dynamic_remote:
+          - group: master
+            listen_port: 6443
+            param:
+              - check
+              - check-ssl
+              - verify none
+```
+
 
 ## Overriding configuration template
 
