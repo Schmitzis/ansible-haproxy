@@ -29,7 +29,7 @@ Set up (the latest version of) [HAProxy](http://www.haproxy.org/) in Ubuntu syst
 * `haproxy_global_stats`: [default: See `defaults/main.yml`]: Stats declarations
 * `haproxy_global_stats.sockets`:  [default: `[{listen: /run/haproxy/admin.sock }}"}]`]: Sockets declarations
 * `haproxy_global_stats.sockets.{n}.listen`:  [required]: Defines a listening address and/or ports (e.g. `/run/haproxy/admin.sock`)
-* `haproxy_global_stats.sockets.{n}.param`:  [optional]: A list of parameters common to this bind declarations (e.g. `['mode 660', 'level admin', 'process 1']`)
+* `haproxy_global_stats.sockets.{n}.param`:  [optional]: A list of parameters common to this bind declarations (e.g. `['mode 660', 'level admin']`)
 * `haproxy_global_stats.timeout`:  [optional]: The default timeout on the stats socket
 * `haproxy_global_user`: [default: `haproxy`]: Similar to `"uid"` but uses the UID of user name `<user name>` from `/etc/passwd`
 * `haproxy_global_group`: [default: `haproxy`]: Similar to `"gid"` but uses the GID of group name `<group name>` from `/etc/group`
@@ -95,7 +95,6 @@ Set up (the latest version of) [HAProxy](http://www.haproxy.org/) in Ubuntu syst
 * `haproxy_listen.{n}.bind`: [required]: Bind declarations
 * `haproxy_listen.{n}.bind.{n}.listen`: [required]: Defines one or several listening addresses and/or ports (e.g. `0.0.0.0:1936`)
 * `haproxy_listen.{n}.bind.{n}.param`: [optional]: A list of parameters common to this bind declarations
-* `haproxy_listen.{n}.bind_process`:  [optional]: Limits the declaration to a certain set of processes numbers (e.g. `[all]`, `[1]`, `[2 ,3, 4]`)
 * `haproxy_listen.{n}.mode`: [optional]: Set the running mode or protocol of the section (e.g. `http`)
 * `haproxy_listen.{n}.balance`: [required]: The load balancing algorithm to be used (e.g. `roundrobin`)
 * `haproxy_listen.{n}.hash_type`: [optional]: The hashing type to be used for balancing (e.g. `consistent`)
@@ -214,7 +213,6 @@ Set up (the latest version of) [HAProxy](http://www.haproxy.org/) in Ubuntu syst
 * `haproxy_frontend.{n}.bind`: [required]: Bind declarations
 * `haproxy_frontend.{n}.bind.{n}.listen`: [required]: Defines one or several listening addresses and/or ports (e.g. `0.0.0.0:443`)
 * `haproxy_frontend.{n}.bind.{n}.param`: [optional]: A list of parameters common to this bind declarations
-* `haproxy_frontend.{n}.bind_process`:  [optional]: Limits the declaration to a certain set of processes numbers (e.g. `[all]`, `[1]`, `[2 ,3, 4]`)
 * `haproxy_frontend.{n}.mode`: [optional]: Set the running mode or protocol of the section (e.g. `http`)
 * `haproxy_frontend.{n}.maxconn`: [optional]: Fix the maximum number of concurrent connections
 * `haproxy_frontend.{n}.logformat`: [optional]: Specifies the log format string to use for traffic logs (e.g. `'"%{+Q}o\ %t\ %s\ %{-Q}r"'`)
@@ -304,7 +302,6 @@ Set up (the latest version of) [HAProxy](http://www.haproxy.org/) in Ubuntu syst
 * `haproxy_backend`: [default: `[]`]: Back-end declarations
 * `haproxy_backend.{n}.name`: [required]: The name of the section (e.g. `webservers`)
 * `haproxy_backend.{n}.description`: [optional]: A description of the section (e.g. `Back-end with all (Apache) webservers`)
-* `haproxy_backend.{n}.bind_process`:  [optional]: Limits the declaration to a certain set of processes numbers (e.g. `[all]`, `[1]`, `[2 ,3, 4]`)
 * `haproxy_backend.{n}.mode`: [optional]: Set the running mode or protocol of the section (e.g. `http`)
 * `haproxy_backend.{n}.balance`: [required]: The load balancing algorithm to be used (e.g. `roundrobin`)
 * `haproxy_backend.{n}.source`: [optional]: Set the source address or interface for connections from the proxy
@@ -669,8 +666,6 @@ None
             param:
               - ssl
               - 'crt star-example0-com.pem'
-        bind_process:
-          - 1
         mode: http
         stats:
           enable: true
@@ -691,10 +686,6 @@ None
               - ssl
               - 'crt star-example1-com.pem'
               - 'crt star-example2-com.pem'
-        bind_process:
-          - 2
-          - 3
-          - 4
         acl:
           - string: secure dst_port eq 443
         mode: http
@@ -717,16 +708,12 @@ None
           - listen: "{{ ansible_lo['ipv4']['address'] }}:80"
             param:
               - accept-proxy
-        bind_process:
-          - 1
         mode: http
         default_backend: webservers
 
     haproxy_backend:
       - name: webservers
         description: Back-end with all (Apache) webservers
-        bind_process:
-          - 1
         mode: http
         balance: roundrobin
         option:
